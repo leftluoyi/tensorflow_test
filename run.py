@@ -31,7 +31,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 from tensorflow.examples.tutorials.mnist import mnist
 
 # Basic model parameters as external flags.
-FLAGS = None
+FLAGS = None #
 
 
 def placeholder_inputs(batch_size):
