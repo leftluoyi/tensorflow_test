@@ -44,4 +44,4 @@ for i in range(10000):
 print("Start to evaluate...")
 correct = tf.equal(tf.argmax(y_,1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-print("The accuracy is: %g" % sess.run(accuracy,{x: testdata[:,0:4].reshape(-1, 4), y_: pd.get_dummies(testdata[:,4]).values}))
+print("The accuracy is: %g" % sess.run(accuracy,{ x: testdata[:,0:4].reshape(-1, 4), y_: pd.get_dummies(testdata[:,4]).values }))
