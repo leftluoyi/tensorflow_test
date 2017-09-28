@@ -2,8 +2,9 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 
-##### Load data #####
-
+########################################################################################################################
+############################################### Functions ##############################################################
+########################################################################################################################
 def unpickle(file):
     import pickle
     with open(file, 'rb') as fo:
@@ -18,13 +19,21 @@ def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
-data = unpickle("dataset/cifar/data_batch_1")
-# data = np.hstack([data[b'data']/256, pd.get_dummies(data[b'labels']).values])
-features = data[b'data']/256
-labels = pd.get_dummies(data[b'labels']).values
 
-features_placeholder = tf.placeholder(features.dtype, features.shape)
-labels_placeholder = tf.placeholder(labels.dtype, labels.shape)
+########################################################################################################################
+############################################ Prepare dataset ###########################################################
+########################################################################################################################
+# for i in range(1,6):
+#     data = unpickle("dataset/cifar/data_batch_%d" %(i))
+#     features = data[b'data']/256
+#     labels = pd.get_dummies(data[b'labels']).values
+
+# data = unpickle("dataset/cifar/data_batch_1")
+# features = data[b'data']/256
+# labels = pd.get_dummies(data[b'labels']).values
+
+features_placeholder = tf.placeholder(tf.float32, [10000, 3072])
+labels_placeholder = tf.placeholder(tf.uint8, [10000, 10])
 dataset = tf.contrib.data.Dataset.from_tensor_slices((features_placeholder, labels_placeholder))
 
 # dataset = tf.contrib.data.Dataset.from_tensor_slices(data)
@@ -36,21 +45,24 @@ x = tf.cast(x, tf.float32)
 # y_ = tf.cast(y_, tf.float32)
 x_image = tf.reshape(x, [-1,32,32,3])
 
+########################################################################################################################
+################################################# Train ################################################################
+########################################################################################################################
 sess = tf.Session()
 
 with tf.name_scope("convolutional_layer"):
-    W_conv1 = weight_variable([5,5,3,32])
+    W_conv1 = weight_variable([5,5,3,128])
     tf.summary.histogram("Convolutional layer weights", W_conv1)
-    b_conv1 = bias_variable([32])
+    b_conv1 = bias_variable([128])
     tf.summary.histogram("Convolutional layer bias", b_conv1)
     conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding="SAME") + b_conv1)
     max1 = tf.nn.max_pool(conv1, ksize=[1,2,2,1], strides=[1,2,2,1], padding="SAME")
     tf.summary.histogram("Max layer output", W_conv1)
 
 with tf.name_scope("full_connected_layer"):
-    W_fc = weight_variable([16 * 16 * 32, 1024])
+    W_fc = weight_variable([16 * 16 * 128, 1024])
     b_fc = bias_variable([1024])
-    max1_flat = tf.reshape(max1, [-1, 16*16*32])
+    max1_flat = tf.reshape(max1, [-1, 16 * 16 * 128])
     fc = tf.nn.relu(tf.matmul(max1_flat, W_fc) + b_fc)
 
 with tf.name_scope("readout_layer"):
@@ -61,7 +73,7 @@ with tf.name_scope("readout_layer"):
 with tf.name_scope("loss"):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=ro))
     tf.summary.scalar("loss", loss)
-    train = tf.train.GradientDescentOptimizer(0.005).minimize(loss)
+    train = tf.train.GradientDescentOptimizer(0.0002).minimize(loss)
 
 merged = tf.summary.merge_all()
 writer = tf.summary.FileWriter("log/")
@@ -70,15 +82,19 @@ writer.add_graph(sess.graph)
 sess.run(tf.global_variables_initializer())
 
 for _ in range(5):
-    sess.run(iterator.initializer, feed_dict={features_placeholder: features, labels_placeholder: labels})
-    for i in range(83):
-        if i%5 == 0:
-            s = sess.run(merged)
-            writer.add_summary(s, i)
-        sess.run(train)
+    for j in range(1,6):
+        data = unpickle("dataset/cifar/data_batch_%d" %(j))
+        features = data[b'data']/256
+        labels = pd.get_dummies(data[b'labels']).values
+        sess.run(iterator.initializer, feed_dict={features_placeholder: features, labels_placeholder: labels})
+        for i in range(83):
+            if i%5 == 0:
+                s = sess.run(merged)
+                writer.add_summary(s, i)
+            sess.run(train)
 
 ########################################################################################################################
-########################################################################################################################
+################################################# Test #################################################################
 ########################################################################################################################
 data_test = unpickle("dataset/cifar/test_batch")
 features_test = data_test[b'data']/256
