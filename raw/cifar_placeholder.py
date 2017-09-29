@@ -50,20 +50,29 @@ x_image = tf.reshape(x, [-1,32,32,3])
 ########################################################################################################################
 sess = tf.Session()
 
-with tf.name_scope("convolutional_layer"):
-    W_conv1 = weight_variable([5,5,3,128])
-    tf.summary.histogram("Convolutional layer weights", W_conv1)
-    b_conv1 = bias_variable([128])
-    tf.summary.histogram("Convolutional layer bias", b_conv1)
+with tf.name_scope("convolutional_layer1"):
+    W_conv1 = weight_variable([5,5,3,32])
+    tf.summary.histogram("Convolutional layer 1 weights", W_conv1)
+    b_conv1 = bias_variable([32])
+    tf.summary.histogram("Convolutional layer 1 bias", b_conv1)
     conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding="SAME") + b_conv1)
     max1 = tf.nn.max_pool(conv1, ksize=[1,2,2,1], strides=[1,2,2,1], padding="SAME")
-    tf.summary.histogram("Max layer output", W_conv1)
+    tf.summary.histogram("Max layer 2 output", W_conv1)
+
+with tf.name_scope("convolutional_layer2"):
+    W_conv2 = weight_variable([5,5,32,64])
+    tf.summary.histogram("Convolutional layer 2 weights", W_conv1)
+    b_conv2 = bias_variable([64])
+    tf.summary.histogram("Convolutional layer 2 bias", b_conv1)
+    conv2 = tf.nn.relu(tf.nn.conv2d(max1, W_conv2, strides=[1, 1, 1, 1], padding="SAME") + b_conv2)
+    max2 = tf.nn.max_pool(conv2, ksize=[1,2,2,1], strides=[1,2,2,1], padding="SAME")
+    tf.summary.histogram("Max layer 2 output", W_conv1)
 
 with tf.name_scope("full_connected_layer"):
-    W_fc = weight_variable([16 * 16 * 128, 1024])
+    W_fc = weight_variable([8 * 8 * 64, 1024])
     b_fc = bias_variable([1024])
-    max1_flat = tf.reshape(max1, [-1, 16 * 16 * 128])
-    fc = tf.nn.relu(tf.matmul(max1_flat, W_fc) + b_fc)
+    max2_flat = tf.reshape(max2, [-1, 8 * 8 * 64])
+    fc = tf.nn.relu(tf.matmul(max2_flat, W_fc) + b_fc)
 
 with tf.name_scope("readout_layer"):
     W_ro = weight_variable([1024, 10])
@@ -73,7 +82,7 @@ with tf.name_scope("readout_layer"):
 with tf.name_scope("loss"):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=ro))
     tf.summary.scalar("loss", loss)
-    train = tf.train.GradientDescentOptimizer(0.0002).minimize(loss)
+    train = tf.train.GradientDescentOptimizer(0.005).minimize(loss)
 
 merged = tf.summary.merge_all()
 writer = tf.summary.FileWriter("log/")
