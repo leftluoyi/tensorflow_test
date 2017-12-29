@@ -23,15 +23,6 @@ def bias_variable(shape):
 ########################################################################################################################
 ############################################ Prepare dataset ###########################################################
 ########################################################################################################################
-# for i in range(1,6):
-#     data = unpickle("dataset/cifar/data_batch_%d" %(i))
-#     features = data[b'data']/256
-#     labels = pd.get_dummies(data[b'labels']).values
-
-# data = unpickle("dataset/cifar/data_batch_1")
-# features = data[b'data']/256
-# labels = pd.get_dummies(data[b'labels']).values
-
 features_placeholder = tf.placeholder(tf.float32, [10000, 3072])
 labels_placeholder = tf.placeholder(tf.uint8, [10000, 10])
 dataset = tf.contrib.data.Dataset.from_tensor_slices((features_placeholder, labels_placeholder))
@@ -92,7 +83,7 @@ sess.run(tf.global_variables_initializer())
 
 for _ in range(5):
     for j in range(1,6):
-        data = unpickle("dataset/cifar/data_batch_%d" %(j))
+        data = unpickle("../dataset/cifar/data_batch_%d" %(j))
         features = data[b'data']/256
         labels = pd.get_dummies(data[b'labels']).values
         sess.run(iterator.initializer, feed_dict={features_placeholder: features, labels_placeholder: labels})
@@ -105,7 +96,7 @@ for _ in range(5):
 ########################################################################################################################
 ################################################# Test #################################################################
 ########################################################################################################################
-data_test = unpickle("dataset/cifar/test_batch")
+data_test = unpickle("../dataset/cifar/test_batch")
 features_test = data_test[b'data']/256
 labels_test = pd.get_dummies(data_test[b'labels']).values
 sess.run(iterator.initializer, feed_dict={features_placeholder: features_test, labels_placeholder: labels_test})
