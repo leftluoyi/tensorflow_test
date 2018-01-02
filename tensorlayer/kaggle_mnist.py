@@ -63,30 +63,25 @@ network_conv = tl.layers.DenseLayer(network_conv, n_units=10, act=tf.identity, n
 
 y_conv = network_conv.outputs
 cost_conv = tl.cost.cross_entropy(y_conv, y_, name='conv_cost')
-correct_prediction_conv = tf.equal(tf.argmax(y_conv, 1), y_)
-acc_conv = tf.reduce_mean(tf.cast(correct_prediction_conv, tf.float32))
 train_op_conv = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.9, beta2=0.999,
                                        epsilon=1e-08, use_locking=False).minimize(cost_conv,
                                                                                   var_list=network_conv.all_params)
-# tl.layers.initialize_global_variables(sess)
-# y_digit_conv = tf.argmax(tf.nn.softmax(y_conv), 1)
-# prediction_conv = tl.utils.predict(sess, network_conv, text_X, X, y_digit_conv, batch_size=None).astype(np.int16)
 
 # train
 tl.layers.initialize_global_variables(sess)
 tl.utils.fit(sess, network_dense, train_op_dense, cost_dense, X_train=train_X, y_train=train_y, x=X, y_=y_,
-             acc=acc_dense, batch_size=500, n_epoch=50, print_freq=1,
+             acc=acc_dense, batch_size=500, n_epoch=1, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
 tl.utils.fit(sess, network_conv, train_op_conv, cost_conv, X_train=train_X, y_train=train_y, x=X, y_=y_,
-             acc=acc_conv, batch_size=500, n_epoch=20, print_freq=1,
+             acc=acc_conv, batch_size=500, n_epoch=1, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
 
 # prediction
-prediction_conv = tl.utils.predict(sess, network_conv, text_X, X, y_conv, batch_size=None).astype(np.int16)
-prediction_dense = tl.utils.predict(sess, network_dense, text_X, X, y_conv, batch_size=None).astype(np.int16)
+prediction_conv = tl.utils.predict(sess, network_conv, text_X, X, y_conv, batch_size=500)
+prediction_dense = tl.utils.predict(sess, network_dense, text_X, X, y_dense, batch_size=500)
 
 prediction = prediction_conv * 2 + prediction_dense
-prediction_digit = tf.arg_max(tf.nn.softmax(prediction), 1)
+prediction_digit = tf.argmax(tf.nn.softmax(prediction), 1)
 
 # finish up
 tl.files.save_npz(network_dense.all_params , name='model_dense.npz')
@@ -96,8 +91,8 @@ with open('predictions.csv', 'w', newline='') as csvfile:
     fieldnames = ['ImageId', 'Label']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
-    for i in range(len(prediction_conv)):
-        writer.writerow({'ImageId': i + 1, 'Label': prediction_conv[i]})
+    for i in range(len(prediction_digit)):
+        writer.writerow({'ImageId': i + 1, 'Label': prediction_digit[i]})
 
 
 
