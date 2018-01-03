@@ -22,6 +22,7 @@ test_X = pd.read_csv('data/mnist/kaggle_test.csv').values
 # tensorflow initialize
 sess = tf.InteractiveSession()
 X = tf.placeholder(train_X.dtype, shape=[None, 784])
+X = X / 256
 y_ = tf.placeholder(train_y.dtype, shape=[None, ])
 
 # tensorflow dense
@@ -80,22 +81,25 @@ train_op_conv = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.9, beta2=0.
 # train
 tl.layers.initialize_global_variables(sess)
 tl.utils.fit(sess, network_dense, train_op_dense, cost_dense, X_train=train_X, y_train=train_y, x=X, y_=y_, X_val=valid_X, y_val=valid_y,
-             acc=acc_dense, batch_size=500, n_epoch=80, print_freq=1,
+             acc=acc_dense, batch_size=500, n_epoch=1, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
 tl.utils.fit(sess, network_conv, train_op_conv, cost_conv, X_train=train_X, y_train=train_y, x=X, y_=y_, X_val=valid_X, y_val=valid_y,
-             acc=acc_conv, batch_size=500, n_epoch=30, print_freq=1,
+             acc=acc_conv, batch_size=500, n_epoch=50, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
+
+# save models
+tl.files.save_npz(network_dense.all_params , name='model_dense.npz')
+tl.files.save_npz(network_conv.all_params , name='model_conv.npz')
 
 # prediction
 prediction_conv = tl.utils.predict(sess, network_conv, test_X, X, y_conv, batch_size=500)
 prediction_dense = tl.utils.predict(sess, network_dense, test_X, X, y_dense, batch_size=500)
 
-prediction = prediction_conv * 2 + prediction_dense
-prediction_digit = tf.argmax(tf.nn.softmax(prediction), 1).eval()
+prediction_conv_flat = np.reshape(prediction_conv, [-1, 10])
+prediction_dense_flat = np.reshape(prediction_dense, [-1, 10])
 
-# finish up
-tl.files.save_npz(network_dense.all_params , name='model_dense.npz')
-tl.files.save_npz(network_conv.all_params , name='model_conv.npz')
+prediction = prediction_conv_flat * 2 + prediction_dense_flat * 0
+prediction_digit = tf.argmax(tf.nn.softmax(prediction), 1).eval()
 
 with open('predictions.csv', 'w', newline='') as csvfile:
     fieldnames = ['ImageId', 'Label']
