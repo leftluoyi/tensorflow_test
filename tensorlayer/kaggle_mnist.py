@@ -92,24 +92,19 @@ tl.files.save_npz(network_dense.all_params , name='model_dense.npz')
 tl.files.save_npz(network_conv.all_params , name='model_conv.npz')
 
 # prediction
-prediction_conv = tl.utils.predict(sess, network_conv, test_X, X, y_conv, batch_size=500)
-prediction_dense = tl.utils.predict(sess, network_dense, test_X, X, y_dense, batch_size=500)
+prediction_conv = tl.utils.predict(sess, network_conv, test_X, X, y_conv_op, batch_size=500)
+prediction_dense = tl.utils.predict(sess, network_dense, test_X, X, y_dense_op, batch_size=500)
 
-prediction_conv_flat = np.reshape(prediction_conv, [-1, 10])
-prediction_dense_flat = np.reshape(prediction_dense, [-1, 10])
-
-prediction = prediction_conv_flat * 2 + prediction_dense_flat * 0
-prediction_digit = tf.argmax(tf.nn.softmax(prediction), 1).eval()
+prediction_conv_flat = np.reshape(prediction_conv, [-1, 10], order='F')
+prediction_dense_flat = np.reshape(prediction_dense, [-1, 10], order='F')
 
 with open('predictions.csv', 'w', newline='') as csvfile:
     fieldnames = ['ImageId', 'Label']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
-    for i in range(len(prediction_digit)):
-        writer.writerow({'ImageId': i + 1, 'Label': prediction_digit[i]})
+    for i in range(len(prediction_conv)):
+        writer.writerow({'ImageId': i + 1, 'Label': prediction_conv[i]})
 print("Write predictions finished")
 
 
 sess.close()
-
-# the end
