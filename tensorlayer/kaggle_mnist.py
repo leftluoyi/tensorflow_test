@@ -6,15 +6,22 @@ import csv
 
 # data importing
 data = pd.read_csv('data/mnist/kaggle_train.csv')
-train_y = data['label'].values
-train_X = data.drop('label', 1).values.astype(np.float32)
-text_X = pd.read_csv('data/mnist/kaggle_test.csv').values
+data_x = data.drop('label',1).values
+data_y = data['label'].values
+
+num = len(data.index)
+trainset = np.random.choice(num, int(num * 0.9), replace=False)
+
+
+train_X = data_x[trainset,:].astype(np.float32)
+valid_X = np.delete(data_x, trainset, axis=0).astype(np.float32)
+train_y = data_y[trainset]
+valid_y = np.delete(data_y, trainset, axis=0)
 
 # tensorflow initialize
 sess = tf.InteractiveSession()
 X = tf.placeholder(train_X.dtype, shape=[None, 784])
 y_ = tf.placeholder(train_y.dtype, shape=[None, ])
-
 
 # tensorflow dense
 network_dense = tl.layers.InputLayer(X, name='dense_input_layer')
@@ -71,36 +78,33 @@ train_op_conv = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.9, beta2=0.
 
 # train
 tl.layers.initialize_global_variables(sess)
-tl.utils.fit(sess, network_dense, train_op_dense, cost_dense, X_train=train_X, y_train=train_y, x=X, y_=y_,
-             acc=acc_dense, batch_size=128, n_epoch=100, print_freq=1,
+tl.utils.fit(sess, network_dense, train_op_dense, cost_dense, X_train=train_X, y_train=train_y, x=X, y_=y_, X_val=valid_X, y_val=valid_y,
+             acc=acc_dense, batch_size=500, n_epoch=80, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
-tl.utils.fit(sess, network_conv, train_op_conv, cost_conv, X_train=train_X, y_train=train_y, x=X, y_=y_,
-             acc=acc_conv, batch_size=128, n_epoch=50, print_freq=1,
+tl.utils.fit(sess, network_conv, train_op_conv, cost_conv, X_train=train_X, y_train=train_y, x=X, y_=y_, X_val=valid_X, y_val=valid_y,
+             acc=acc_conv, batch_size=500, n_epoch=30, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
 
+# prediction
+prediction_conv = tl.utils.predict(sess, network_conv, text_X, X, y_conv, batch_size=500)
+prediction_dense = tl.utils.predict(sess, network_dense, text_X, X, y_dense, batch_size=500)
 
-# save models
-print('saving up')
+prediction = prediction_conv * 2 + prediction_dense
+prediction_digit = tf.argmax(tf.nn.softmax(prediction), 1).eval()
+
+# finish up
 tl.files.save_npz(network_dense.all_params , name='model_dense.npz')
 tl.files.save_npz(network_conv.all_params , name='model_conv.npz')
 
-# prediction
-print('prediction')
-prediction_conv = tl.utils.predict(sess, network_conv, text_X, X, y_conv, batch_size=None)
-prediction_dense = tl.utils.predict(sess, network_dense, text_X, X, y_dense, batch_size=None)
-
-prediction = prediction_dense + 2 * prediction_conv
-prediction_digit = tf.arg_max(tf.nn.softmax(prediction), 1).eval()
-
-
-print('write to file')
 with open('predictions.csv', 'w', newline='') as csvfile:
     fieldnames = ['ImageId', 'Label']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
     for i in range(len(prediction_digit)):
         writer.writerow({'ImageId': i + 1, 'Label': prediction_digit[i]})
+print("Write predictions finished")
+
 
 sess.close()
 
-print('end')
+# the end
