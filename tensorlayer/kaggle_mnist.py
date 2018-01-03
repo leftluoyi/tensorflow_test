@@ -17,6 +17,7 @@ train_X = data_x[trainset,:].astype(np.float32)
 valid_X = np.delete(data_x, trainset, axis=0).astype(np.float32)
 train_y = data_y[trainset]
 valid_y = np.delete(data_y, trainset, axis=0)
+test_X = pd.read_csv('data/mnist/kaggle_test.csv').values
 
 # tensorflow initialize
 sess = tf.InteractiveSession()
@@ -86,8 +87,8 @@ tl.utils.fit(sess, network_conv, train_op_conv, cost_conv, X_train=train_X, y_tr
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
 
 # prediction
-prediction_conv = tl.utils.predict(sess, network_conv, text_X, X, y_conv, batch_size=500)
-prediction_dense = tl.utils.predict(sess, network_dense, text_X, X, y_dense, batch_size=500)
+prediction_conv = tl.utils.predict(sess, network_conv, test_X, X, y_conv, batch_size=500)
+prediction_dense = tl.utils.predict(sess, network_dense, test_X, X, y_dense, batch_size=500)
 
 prediction = prediction_conv * 2 + prediction_dense
 prediction_digit = tf.argmax(tf.nn.softmax(prediction), 1).eval()
