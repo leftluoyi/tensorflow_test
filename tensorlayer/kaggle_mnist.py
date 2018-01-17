@@ -32,12 +32,12 @@ network_dense = tl.layers.DenseLayer(network_dense, n_units=200, act=tf.nn.relu,
 network_dense = tl.layers.DenseLayer(network_dense, n_units=10, act=tf.identity, name='dense_layer_3')
 
 y_dense = network_dense.outputs
+y_dense_op = tf.argmax(tf.nn.softmax(y_dense), 1)
 cost_dense = tl.cost.cross_entropy(y_dense, y_, name='dense_cost')
 correct_prediction_dense = tf.equal(tf.argmax(y_dense, 1), y_)
 acc_dense = tf.reduce_mean(tf.cast(correct_prediction_dense, tf.float32))
 train_op_dense = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.9, beta2=0.999,
-                                        epsilon=1e-08, use_locking=False).minimize(cost_dense,
-                                                                                   var_list=network_dense.all_params)
+                                        epsilon=1e-08, use_locking=False).minimize(cost_dense, var_list=network_dense.all_params)
 
 # tensorflow LeNET
 X_image_conv = tf.reshape(X, [-1, 28, 28, 1])
@@ -71,6 +71,7 @@ network_conv = tl.layers.DenseLayer(network_conv, n_units=256, act=tf.nn.relu, n
 network_conv = tl.layers.DenseLayer(network_conv, n_units=10, act=tf.identity, name='conv_dense_2')
 
 y_conv = network_conv.outputs
+y_conv_op = tf.argmax(tf.nn.softmax(y_conv), 1)
 cost_conv = tl.cost.cross_entropy(y_conv, y_, name='conv_cost')
 correct_prediction_conv = tf.equal(tf.argmax(y_conv, 1), y_)
 acc_conv = tf.reduce_mean(tf.cast(correct_prediction_conv, tf.float32))
@@ -95,8 +96,6 @@ tl.files.save_npz(network_conv.all_params , name='model_conv.npz')
 prediction_conv = tl.utils.predict(sess, network_conv, test_X, X, y_conv_op, batch_size=500)
 prediction_dense = tl.utils.predict(sess, network_dense, test_X, X, y_dense_op, batch_size=500)
 
-prediction_conv_flat = np.reshape(prediction_conv, [-1, 10], order='F')
-prediction_dense_flat = np.reshape(prediction_dense, [-1, 10], order='F')
 
 with open('predictions.csv', 'w', newline='') as csvfile:
     fieldnames = ['ImageId', 'Label']
