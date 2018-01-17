@@ -84,7 +84,7 @@ tl.utils.fit(sess, network_dense, train_op_dense, cost_dense, X_train=train_X, y
              acc=acc_dense, batch_size=500, n_epoch=1, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
 tl.utils.fit(sess, network_conv, train_op_conv, cost_conv, X_train=train_X, y_train=train_y, x=X, y_=y_, X_val=valid_X, y_val=valid_y,
-             acc=acc_conv, batch_size=500, n_epoch=50, print_freq=1,
+             acc=acc_conv, batch_size=500, n_epoch=1, print_freq=1,
              eval_train=False, tensorboard=False, tensorboard_epoch_freq=1)
 
 # save models
